@@ -5,16 +5,20 @@ on:
     - cron: '0 * * * *'  # Her saat başı otomatik çalışır
   workflow_dispatch:     # Manuel çalıştırma butonunu aktif eder
 
+# GitHub'ın uyarısında belirttiği Node 24 zorlamasını şimdiden aktif ediyoruz
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Adım: Node.js 24 uyumlu güncel checkout sürümü (v4)
+    # 1. Adım: Node.js 24 destekleyen güncel checkout sürümü
     - name: Depoyu Klonla
       uses: actions/checkout@v4
 
-    # 2. Adım: Node.js 24 uyumlu güncel python kurulum sürümü (v5)
+    # 2. Adım: Node.js 24 destekleyen güncel python kurulum sürümü
     - name: Python Kur
       uses: actions/setup-python@v5
       with:
