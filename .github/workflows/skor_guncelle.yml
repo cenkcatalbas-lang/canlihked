@@ -27,8 +27,7 @@ jobs:
     # 3. Adım: Gerekli kütüphaneleri yükleme
     - name: Gerekli Kütüphaneleri Yükle
       run: |
-        pip install requests
-
+pip install requests pandas streamlit beautifulsoup4
     # 4. Adım: Python kodunuzu çalıştırma
     - name: Botu Calistir
       run: python hked_canli.py
