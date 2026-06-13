@@ -65,4 +65,37 @@ for mac in MAC_VERILERI:
     # Eğer internetteki canlı veri havuzunda bu maçın ID'si varsa skorları al
     if f_id in canli_api_verisi:
         mac_data = canli_api_verisi[f_id]
-        sk
+        skor_gosterim = mac_data["skor"]
+        
+        ev_gol = mac_data["ev"]
+        dep_gol = mac_data["dep"]
+        
+        if ev_gol > dep_gol: mac_sonucu = 1
+        elif dep_gol > ev_gol: mac_sonucu = 2
+        else: mac_sonucu = 0
+
+    # Puanları Dağıt
+    if mac_sonucu is not None:
+        for kisi, tahmin in mac["tahminler"].items():
+            if tahmin == mac_sonucu:
+                puanlar[kisi] += 1
+
+    guncel_tablo.append({
+        "Tarih": mac["tarih"],
+        "Grup": mac["grup"],
+        "Maç": f"{mac['takim_1']} - {mac['takim_2']}",
+        "Canlı Skor": skor_gosterim
+    })
+
+# --- STREAMLIT PANEL ARABİRİMİ ---
+sol, sag = st.columns([1, 2])
+
+with sol:
+    st.subheader("📊 Puan Durumu")
+    df_puan = pd.DataFrame(list(puanlar.items()), columns=["Yarışmacı", "Puan"]).sort_values(by="Puan", ascending=False).reset_index(drop=True)
+    st.dataframe(df_puan, use_container_width=True)
+
+with sag:
+    st.subheader("📅 Anlık Maç Sonuçları")
+    df_fikstur = pd.DataFrame(guncel_tablo)
+    st.dataframe(df_fikstur, use_container_width=True)
