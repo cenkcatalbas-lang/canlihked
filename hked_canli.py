@@ -1,139 +1,99 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
-import requests
-import json
 
 # 1. Sayfa Ayarları
 st.set_page_config(page_title="HKED Canlı Dünya Kupası", page_icon="🏆", layout="wide")
 
 st.title("🏆 HKED Canlı Skor & Tahmin Paneli")
-st.write("Skorlar küresel turnuva veri merkezlerinden anlık olarak otomatik çekilmektedir. Saatler TSİ'ye göredir.")
+st.write("Skorlar girildiği an tüm katılımcı puanları sistem tarafından otomatik hesaplanır. Saatler TSİ'ye göredir.")
 
-# 2. TÜM DETAYLARIYLA DÜNYA KUPASI FİKSTÜRÜ VE TAHMİNLER
-MAC_VERILERI = [
-    {
-        "id": 1, 
-        "tarih": "11 Haziran 2026", 
-        "saat": "23:00", 
-        "grup": "A", 
-        "takim_1": "mexico", 
-        "takim_2": "south africa", 
-        "ulke": "Meksika", 
-        "stad": "Estadio Azteca (Mexico City)",
-        "tahminler": {"TOLGA": 1, "MUSTAFA": 1, "ISITAN": 1, "YIGIT": 1, "CENK": 0}
-    },
-    {
-        "id": 2, 
-        "tarih": "12 Haziran 2026", 
-        "saat": "19:00", 
-        "grup": "A", 
-        "takim_1": "south korea", 
-        "takim_2": "czech republic", 
-        "ulke": "Kanada", 
-        "stad": "BC Place (Vancouver)",
-        "tahminler": {"TOLGA": 1, "MUSTAFA": 0, "ISITAN": 1, "YIGIT": 1, "CENK": 0}
-    },
-    {
-        "id": 3, 
-        "tarih": "12 Haziran 2026", 
-        "saat": "22:00", 
-        "grup": "B", 
-        "takim_1": "canada", 
-        "takim_2": "bosnia and herzegovina", 
-        "ulke": "Kanada", 
-        "stad": "BMO Field (Toronto)",
-        "tahminler": {"TOLGA": 1, "MUSTAFA": 2, "ISITAN": 2, "YIGIT": 1, "CENK": 1}
-    },
-    {
-        "id": 4, 
-        "tarih": "13 Haziran 2026", 
-        "saat": "01:00", 
-        "grup": "D", 
-        "takim_1": "usa", 
-        "takim_2": "paraguay", 
-        "ulke": "ABD", 
-        "stad": "SoFi Stadium (Los Angeles)",
-        "tahminler": {"TOLGA": 0, "MUSTAFA": 1, "ISITAN": 0, "YIGIT": 1, "CENK": 1}
-    },
-    {
-        "id": 5, 
-        "tarih": "13 Haziran 2026", 
-        "saat": "18:00", 
-        "grup": "B", 
-        "takim_1": "qatar", 
-        "takim_2": "switzerland", 
-        "ulke": "ABD", 
-        "stad": "MetLife Stadium (New York)",
-        "tahminler": {"TOLGA": 2, "MUSTAFA": 2, "ISITAN": 2, "YIGIT": 2, "CENK": 2}
-    },
-    {
-        "id": 6, 
-        "tarih": "14 Haziran 2026", 
-        "saat": "21:00", 
-        "grup": "C", 
-        "takim_1": "brazil", 
-        "takim_2": "morocco", 
-        "ulke": "Meksika", 
-        "stad": "Estadio BBVA (Monterrey)",
-        "tahminler": {"TOLGA": 0, "MUSTAFA": 1, "ISITAN": 1, "YIGIT": 1, "CENK": 1}
-    },
-    {
-        "id": 7, 
-        "tarih": "14 Haziran 2026", 
-        "saat": "00:00", 
-        "grup": "C", 
-        "takim_1": "haiti", 
-        "takim_2": "scotland", 
-        "ulke": "ABD", 
-        "stad": "Hard Rock Stadium (Miami)",
-        "tahminler": {"TOLGA": 2, "MUSTAFA": 2, "ISITAN": 2, "YIGIT": 2, "CENK": 2}
+# 2. GİZLİ SKOR DEPOSU (Streamlit Hafızası)
+# Siteniz açık kaldığı sürece skorları burada kilitli tutar
+if "canli_skorlar" not in st.session_state:
+    st.session_state.canli_skorlar = {
+        1: "2 - 1",  # Mexico - South Africa
+        2: "1 - 1",  # South Korea - Czech Republic
+        3: "Oynanmadı",
+        4: "Oynanmadı",
+        5: "Oynanmadı",
+        6: "Oynanmadı",
+        7: "Oynanmadı"
     }
+
+# 3. TÜM DETAYLARIYLA DÜNYA KUPASI FİKSTÜRÜ VE TAHMİNLER
+MAC_VERILERI = [
+    {"id": 1, "tarih": "11 Haziran 2026", "saat": "23:00", "grup": "A", "takim_1": "Mexico", "takim_2": "South Africa", "ulke": "Meksika", "stad": "Estadio Azteca", "tahminler": {"TOLGA": 1, "MUSTAFA": 1, "ISITAN": 1, "YIGIT": 1, "CENK": 0}},
+    {"id": 2, "tarih": "12 Haziran 2026", "saat": "19:00", "grup": "A", "takim_1": "South Korea", "takim_2": "Czech Republic", "ulke": "Kanada", "stad": "BC Place", "tahminler": {"TOLGA": 1, "MUSTAFA": 0, "ISITAN": 1, "YIGIT": 1, "CENK": 0}},
+    {"id": 3, "tarih": "12 Haziran 2026", "saat": "22:00", "grup": "B", "takim_1": "Canada", "takim_2": "Bosnia and Herzegovina", "ulke": "Kanada", "stad": "BMO Field", "tahminler": {"TOLGA": 1, "MUSTAFA": 2, "ISITAN": 2, "YIGIT": 1, "CENK": 1}},
+    {"id": 4, "tarih": "13 Haziran 2026", "saat": "01:00", "grup": "D", "takim_1": "USA", "takim_2": "Paraguay", "ulke": "ABD", "stad": "SoFi Stadium", "tahminler": {"TOLGA": 0, "MUSTAFA": 1, "ISITAN": 0, "YIGIT": 1, "CENK": 1}},
+    {"id": 5, "tarih": "13 Haziran 2026", "saat": "18:00", "grup": "B", "takim_1": "Qatar", "takim_2": "Switzerland", "ulke": "ABD", "stad": "MetLife Stadium", "tahminler": {"TOLGA": 2, "MUSTAFA": 2, "ISITAN": 2, "YIGIT": 2, "CENK": 2}},
+    {"id": 6, "tarih": "14 Haziran 2026", "saat": "21:00", "grup": "C", "takim_1": "Brazil", "takim_2": "Morocco", "ulke": "Meksika", "stad": "Estadio BBVA", "tahminler": {"TOLGA": 0, "MUSTAFA": 1, "ISITAN": 1, "YIGIT": 1, "CENK": 1}},
+    {"id": 7, "tarih": "14 Haziran 2026", "saat": "00:00", "grup": "C", "takim_1": "Haiti", "takim_2": "Scotland", "ulke": "ABD", "stad": "Hard Rock Stadium", "tahminler": {"TOLGA": 2, "MUSTAFA": 2, "ISITAN": 2, "YIGIT": 2, "CENK": 2}}
 ]
 
-@st.cache_data(ttl=15)  # Skorları 15 saniyede bir internetten çeker ve yeniler
-def canli_skorlari_kazila():
-    """Turnuvanın canlı olarak işlendiği ham text/json deposundan skorları filtreler"""
-    url = "https://raw.githubusercontent.com/openfootball/world-cup/master/2026/cup.json"
-    skor_havuzu = {}
+def skoru_yorumla(skor_metni):
+    if skor_metni == "Oynanmadı": return None
     try:
-        res = requests.get(url, timeout=5)
-        if res.status_code == 200:
-            data = res.json()
-            for round_idx, round_data in enumerate(data.get("rounds", [])):
-                for match in round_data.get("matches", []):
-                    t1 = str(match.get("team1", "")).lower().strip()
-                    t2 = str(match.get("team2", "")).lower().strip()
-                    
-                    # Eğer maçta score1 ve score2 alanı varsa ve boş değilse
-                    if "score1" in match and "score2" in match:
-                        s1 = match["score1"]
-                        s2 = match["score2"]
-                        if s1 is not None and s2 is not None:
-                            key = f"{t1}-{t2}"
-                            skor_havuzu[key] = {"skor": f"{s1} - {s2}", "home": int(s1), "away": int(s2)}
+        ev, dep = map(int, skor_metni.split("-"))
+        if ev > dep: return 1   # Ev Sahibi
+        elif dep > ev: return 2 # Deplasman
+        return 0                # Beraberlik
     except:
-        pass
-    return skor_havuzu
+        return None
 
-def mac_sonucunu_yorunla(score_info):
-    if score_info["home"] > score_info["away"]: return 1   # Ev sahibi
-    elif score_info["away"] > score_info["home"]: return 2 # Deplasman
-    return 0                                               # Beraberlik
-
-# --- HESAPLAMA VE SENKRONİZASYON MOTORU ---
-canli_skorlar = canli_skorlari_kazila()
+# --- OTOMATİK PUAN HESAPLAMA MOTORU ---
 puanlar = {"TOLGA": 0, "MUSTAFA": 0, "ISITAN": 0, "YIGIT": 0, "CENK": 0}
 guncel_fikstur_listesi = []
 
 for mac in MAC_VERILERI:
-    t1 = mac["takim_1"]
-    t2 = mac["takim_2"]
-    mac_anahtari = f"{t1}-{t2}".lower().strip()
+    mac_id = mac["id"]
+    skor_metni = st.session_state.canli_skorlar.get(mac_id, "Oynanmadı")
+    mac_sonucu = skoru_yorumla(skor_metni)
+
+    # Eğer maç oynandıysa tahminleri otomatik kontrol et ve puan yaz
+    if mac_sonucu is not None:
+        for kisi, tahmin in mac["tahminler"].items():
+            if tahmin == mac_sonucu:
+                puanlar[kisi] += 1
+
+    guncel_fikstur_listesi.append({
+        "Tarih 📅": mac["tarih"],
+        "TSİ Saat ⏰": mac["saat"],
+        "Grup 📁": mac["grup"],
+        "Maç ⚔️": f"{mac['takim_1']} - {mac['takim_2']}",
+        "Skor ⚽": skor_metni,
+        "Ev Sahibi Ülke 🌍": mac["ulke"],
+        "Stadyum 🏟️": mac["stad"]
+    })
+
+# --- STREAMLIT ARAYÜZÜ ---
+sol_kolon, sag_kolon = st.columns([1, 3])
+
+with sol_kolon:
+    st.subheader("📊 Canlı Puan Durumu")
+    df_puan = pd.DataFrame(list(puanlar.items()), columns=["Yarışmacı", "Puan"]).sort_values(by="Puan", ascending=False).reset_index(drop=True)
+    st.dataframe(df_puan, use_container_width=True)
     
-    skor_metni = "Oynanmadı"
-    mac_sonucu = None
-    
-    # İnternetteki havuzda maç sonucu tescillenmiş mi kontrol et
-    if mac_anahtari in canli_skorlar:
-        mac_data = canli_skorlar
+    st.markdown("---")
+    # GİZLİ ADMIN PANELİ (Sadece skor girmek istediğinde burayı açarsın)
+    with st.expander("🛠️ Skor Güncelleme Paneli (Yönetici)"):
+        secilen_mac = st.selectbox("Maç Seçin:", [f"{m['id']}: {m['takim_1']}-{m['takim_2']}" for m in MAC_VERILERI])
+        mac_id_secilen = int(secilen_mac.split(":")[0])
+        
+        ev_gol = st.number_input("Ev Sahibi Gol:", min_value=0, max_value=20, value=0, step=1)
+        dep_gol = st.number_input("Deplasman Gol:", min_value=0, max_value=20, value=0, step=1)
+        mac_durumu = st.radio("Maç Durumu:", ["Oynandı / Canlı", "Henüz Oynanmadı"])
+        
+        if st.button("Skoru Sisteme İşle 💾"):
+            if mac_durumu == "Oynandı / Canlı":
+                st.session_state.canli_skorlar[mac_id_secilen] = f"{ev_gol} - {dep_gol}"
+            else:
+                st.session_state.canli_skorlar[mac_id_secilen] = "Oynanmadı"
+            st.success("Skor başarıyla güncellendi ve puanlar yeniden hesaplandı!")
+            st.rerun()
+
+with sag_kolon:
+    st.subheader("📅 Detaylı Dünya Kupası Fikstürü")
+    df_fikstur = pd.DataFrame(guncel_fikstur_listesi)
+    st.dataframe(df_fikstur, use_container_width=True)
