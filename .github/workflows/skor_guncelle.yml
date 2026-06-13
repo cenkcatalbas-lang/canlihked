@@ -1,31 +1,30 @@
 name: Canli Skor Guncelle v2
 
-# Botun ne zaman çalışacağını belirliyoruz
 on:
   schedule:
-    - cron: '0 * * * *'  # Her saat başı (0. dakikada) otomatik çalışır
-  workflow_dispatch:     # İsterseniz test etmek için "Şimdi Çalıştır" butonunu açar
+    - cron: '0 * * * *'  # Her saat başı otomatik çalışır
+  workflow_dispatch:     # Manuel çalıştırma butonunu aktif eder
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Adım: GitHub deponuzdaki kodları sunucuya indirir
+    # 1. Adım: Node.js 24 uyumlu güncel checkout sürümü (v4)
     - name: Depoyu Klonla
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    # 2. Adım: Sunucuya Python yükler
+    # 2. Adım: Node.js 24 uyumlu güncel python kurulum sürümü (v5)
     - name: Python Kur
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
-    # 3. Adım: Kodun çalışması için gerekli kütüphaneleri (requests) yükler
+    # 3. Adım: Gerekli kütüphaneleri yükleme
     - name: Gerekli Kütüphaneleri Yükle
       run: |
         pip install requests
 
-    # 4. Adım: Python kodunuzu çalıştırır
+    # 4. Adım: Python kodunuzu çalıştırma
     - name: Botu Calistir
       run: python hked_canli.py
